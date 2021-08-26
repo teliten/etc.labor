@@ -1,0 +1,14 @@
+[Unit]
+Description=Mount unit for ipfs, revision 2139
+Before=snapd.service
+After=zfs-mount.service
+
+[Mount]
+What=/var/lib/snapd/snaps/ipfs_2139.snap
+Where=/snap/ipfs/2139
+Type=squashfs
+Options=nodev,ro,x-gdu.hide,x-gvfs-hide
+LazyUnmount=yes
+
+[Install]
+WantedBy=multi-user.target

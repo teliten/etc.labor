@@ -1,0 +1,10 @@
+# See man 5 aliases for format
+postmaster:    root
+#clamav: root
+nobody: root
+vmail: root
+root: postmaster@fromthemachine.org
+www-data: root
+clamav: root
+amavis: root
+iredapd: root

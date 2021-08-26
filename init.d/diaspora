@@ -1,0 +1,188 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides: diaspora
+# Required-Start: $remote_fs $syslog redis-server
+# Required-Stop: $remote_fs $syslog redis-server
+# Should-Start: postgresql mysql
+# Should-Stop: postgresql mysql
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Diaspora application server
+# Description: Start / stop the Diaspora app server
+### END INIT INFO
+
+# Author: FABIAN Tamas Laszlo <giganetom@gmail.com>
+# Updated: Pirate Praveen <praveen@debian.org>
+
+# Read diaspora common variables
+. /etc/diaspora/diaspora-common.conf
+
+# Read diaspora environment variables
+. ${diaspora_conf}
+
+# PATH should only include /usr/* if it runs after the mountnfs.sh script
+# Note: /usr/local/bin for foreman gem
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
+DESC="Diaspora application server"
+NAME=diaspora
+DIASPORA_HOME="${diaspora_home}"
+
+STARTSCRIPT="./script/server"
+
+LOGFILE=${diaspora_log_dir}/startscript.log
+SCRIPTNAME=$0
+USER=diaspora
+STARTUP_TIMEOUT=100
+
+. /lib/init/vars.sh
+. /lib/lsb/init-functions
+
+if test -d ${DIASPORA_HOME}/vendor/bundle
+then
+  EYE="bundle exec eye"
+else
+  EYE="eye"
+fi
+ 
+# Run commands from DIASPORA_HOME
+cd ${DIASPORA_HOME}
+
+check_unicorn() {
+    pgrep -f "unicorn master"
+}
+
+check_sidekiq() {
+    pgrep -f "sidekiq [0-9\.]* diaspora"
+}
+
+check_eye() {
+    pgrep -f "eye monitoring [a-zA-Z0-9\.]* \[diaspora\]"
+}
+
+check_script_server() {
+    pgrep -f "script/server"
+}
+
+do_start()
+{
+    if ! touch $LOGFILE; then
+        log_failure_msg "Could not touch logfile"
+        return 2
+    fi
+
+    if ! chown $USER $LOGFILE; then
+        log_failure_msg "Could not chown logfile"
+        return 2
+    fi
+
+    if check_unicorn && check_sidekiq; then
+        log_warning_msg "Diaspora is already running"
+        return 1
+    fi
+    
+    if check_script_server; then
+        log_warning_msg "Diaspora is starting"
+        return 1
+    fi
+    
+    sudo -u $USER -E -H $STARTSCRIPT >> $LOGFILE 2>&1  &
+    if  [ $? -gt 0 ]
+    then
+        log_failure_msg "Could not run start script"
+        return 2
+    else
+        log_success_msg "Starting diaspora server..."
+        return 0
+    fi
+
+    [ "$VERBOSE" != no ] && log_action_msg "Waiting for Diaspora processes... "
+    c=0
+    while ! check_unicorn > /dev/null || ! check_sidekiq > /dev/null; do
+        if [ $c -gt $STARTUP_TIMEOUT ]; then
+            log_failure_msg "Timeout waiting for Diaspora processes"
+            return 2
+        fi
+        c=`expr $c + 1`
+        sleep 1
+        [ "$VERBOSE" != no ] && echo -n "."
+    done
+    [ "$VERBOSE" != no ] && log_action_end_msg 0
+}
+
+do_stop()
+{
+    sudo -u $USER -E -H ${EYE} stop diaspora
+
+    for i in `check_eye`; do
+        [ "$VERBOSE" != no ] && log_action_msg "Killing eye with PID $i"
+        kill -TERM $i
+        [ "$VERBOSE" != no ] && log_action_end_msg $?
+    done
+
+    return 0
+}
+
+case "$1" in
+  start)
+    [ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
+    do_start
+    case "$?" in
+        0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+        *) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+    esac
+    ;;
+  stop)
+    [ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+    if ! check_eye
+    then
+        log_action_msg "Eye not found, Diaspora is NOT RUNNING"
+    else
+	do_stop
+    	case "$?" in
+        	0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+	        2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+	esac
+    fi
+    ;;
+  status)
+    log_daemon_msg 'Checking for running Diaspora processes'
+
+    if ! check_eye
+    then
+        log_action_msg " Eye not found"
+	if ! check_script_server
+	then
+		log_action_msg "Diaspora is DOWN"
+	else
+		log_action_msg "Diaspora is STARTING"
+	fi
+    else
+        for i in `check_eye`; do
+            log_action_msg " Found eye with PID $i"
+            sudo -u $USER -E -H ${EYE} info diaspora
+        done
+    fi
+
+    ;;
+  restart|force-reload)
+    [ "$VERBOSE" != no ] && log_daemon_msg "Restarting $DESC" "$NAME"
+
+    if ! check_eye
+    then
+        log_action_msg "Eye not found, Diaspora is DOWN"
+	do_start
+    else
+        for i in `check_eye`; do
+            log_action_msg "Found eye with PID $i"
+            sudo -u $USER -E -H ${EYE} restart diaspora
+        done
+    fi
+    ;;
+  *)
+    echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+    exit 3
+    ;;
+esac
+
+:

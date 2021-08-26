@@ -1,0 +1,80 @@
+upstream domain11 {
+        server unix:/usr/share/diaspora/tmp/diaspora.sock;
+}
+
+server {
+	listen		80;
+	server_name	localhost www.localhost;
+	rewrite		^ https://$server_name$request_uri? permanent;
+}
+
+server {
+            listen   443;
+            server_name localhost www.localhost;
+
+            proxy_set_header   X-Real-IP  $remote_addr;
+            proxy_set_header   X-FORWARDED-PROTO https;
+
+	    ssl on;
+	    ssl_certificate     /etc/diaspora/ssl/localhost-bundle.pem;
+	    ssl_certificate_key /etc/diaspora/ssl/localhost.key;
+
+            access_log /var/log/diaspora/access.log;
+            error_log /var/log/diaspora/error.log;
+
+            root   /usr/share/diaspora/public/;
+            index  index2.html;
+
+            if ($http_user_agent ~* Googlebot) {
+                return 403;
+            }
+
+	    location /uploads/images {
+	      expires 1d;
+	      add_header Cache-Control public;
+	    }
+
+            location /assets {
+              expires 1d;
+              add_header Cache-Control public;
+            }
+
+            location / {
+                          proxy_set_header X-Real-IP $remote_addr;
+                          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                          proxy_set_header Host $http_host;
+                          proxy_set_header X-Forwarded-Proto https;
+                          proxy_redirect off;
+
+                          client_max_body_size 4M;
+                          client_body_buffer_size 128K;
+
+                          if (-f $request_filename/index.html) {
+                                           rewrite (.*) $1/index.html break;
+                          }
+
+                          if (-f $request_filename.html) {
+                                           rewrite (.*) $1.html break;
+                          }
+
+                          if (!-f $request_filename) {
+                                           proxy_pass http://domain11;
+
+                                           break;
+                          }
+            }
+
+	if ($http_user_agent ~ "Python-urllib" ) {
+		return 403;
+	}
+
+	if ($http_user_agent ~ "libwww-perl" ) {
+		return 403;
+	}
+
+	error_page 500 502 503 504  /50x.html;
+	location = /50x.html {
+		root  /usr/share/diaspora;
+	}
+}
+

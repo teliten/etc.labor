@@ -1,0 +1,14 @@
+[Unit]
+Description=Mount unit for docker, revision 796
+Before=snapd.service
+After=zfs-mount.service
+
+[Mount]
+What=/var/lib/snapd/snaps/docker_796.snap
+Where=/snap/docker/796
+Type=squashfs
+Options=nodev,ro,x-gdu.hide,x-gvfs-hide
+LazyUnmount=yes
+
+[Install]
+WantedBy=multi-user.target

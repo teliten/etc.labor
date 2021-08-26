@@ -1,0 +1,13 @@
+[Unit]
+Description=Mount unit for geth, revision 477
+Before=snapd.service
+
+[Mount]
+What=/var/lib/snapd/snaps/geth_477.snap
+Where=/snap/geth/477
+Type=squashfs
+Options=nodev,ro,x-gdu.hide
+LazyUnmount=yes
+
+[Install]
+WantedBy=multi-user.target

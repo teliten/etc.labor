@@ -1,0 +1,5 @@
+hosts       = 127.0.0.1:3306
+user        = vmail
+password    = MCVfpryZ7ZJXLnr8BU4V4d9M7TbxXPpr
+dbname      = vmail
+query       = SELECT bcc_address FROM sender_bcc_domain WHERE domain='%d' AND active=1

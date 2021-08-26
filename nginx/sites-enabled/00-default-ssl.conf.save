@@ -1,0 +1,27 @@
+#
+# Note: This file must be loaded before other virtual host config files,
+#
+# HTTPS
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name _;
+
+    ssl_certificate /etc/letsencrypt/live/e.lamc.la/fullchain.pem;
+   ssl_certificate_key  /etc/letsencrypt/live/e.lamc.la/privkey.pem;
+    root /var/www/html;
+    index index.php index.html;
+
+    include /etc/nginx/templates/misc.tmpl;
+    include /etc/nginx/templates/ssl.tmpl;
+    include /etc/nginx/templates/iredadmin.tmpl;
+    include /etc/nginx/templates/roundcube.tmpl;
+    include /etc/nginx/templates/sogo.tmpl;
+    include /etc/nginx/templates/netdata.tmpl;
+    include /etc/nginx/templates/php-catchall.tmpl;
+    include /etc/nginx/templates/stub_status.tmpl;
+
+}
+
+server 
+   listen 3.12.0.84

@@ -1,0 +1,5 @@
+hosts       = 127.0.0.1:3306
+user        = vmail
+password    = MCVfpryZ7ZJXLnr8BU4V4d9M7TbxXPpr
+dbname      = vmail
+query       = SELECT maillists.transport FROM maillists,domain WHERE maillists.address='%s' AND maillists.active=1 AND maillists.domain = domain.domain AND domain.active=1
