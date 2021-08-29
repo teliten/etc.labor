@@ -1,9 +1,9 @@
 [Unit]
 # Auto-generated, DO NOT EDIT
 Description=Service for snap application docker.dockerd
-Requires=snap-docker-796.mount
+Requires=snap-docker-1125.mount
 Wants=network.target
-After=snap-docker-796.mount network.target snapd.apparmor.service
+After=snap-docker-1125.mount network.target snapd.apparmor.service
 X-Snappy=yes
 
 [Service]
@@ -11,7 +11,7 @@ EnvironmentFile=-/etc/environment
 ExecStart=/usr/bin/snap run docker.dockerd
 SyslogIdentifier=docker.dockerd
 Restart=on-failure
-WorkingDirectory=/var/snap/docker/796
+WorkingDirectory=/var/snap/docker/1125
 TimeoutStopSec=30
 Type=simple
 Delegate=true
