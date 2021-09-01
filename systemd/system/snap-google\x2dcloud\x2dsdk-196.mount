@@ -1,11 +1,11 @@
 [Unit]
-Description=Mount unit for google-cloud-sdk, revision 194
+Description=Mount unit for google-cloud-sdk, revision 196
 Before=snapd.service
 After=zfs-mount.service
 
 [Mount]
-What=/var/lib/snapd/snaps/google-cloud-sdk_194.snap
-Where=/snap/google-cloud-sdk/194
+What=/var/lib/snapd/snaps/google-cloud-sdk_196.snap
+Where=/snap/google-cloud-sdk/196
 Type=squashfs
 Options=nodev,ro,x-gdu.hide,x-gvfs-hide
 LazyUnmount=yes
