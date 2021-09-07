@@ -1,0 +1,14 @@
+[Unit]
+Description=Mount unit for atom, revision 282
+Before=snapd.service
+After=zfs-mount.service
+
+[Mount]
+What=/var/lib/snapd/snaps/atom_282.snap
+Where=/snap/atom/282
+Type=squashfs
+Options=nodev,ro,x-gdu.hide,x-gvfs-hide
+LazyUnmount=yes
+
+[Install]
+WantedBy=multi-user.target
